@@ -7,24 +7,24 @@ namespace mc_control {
     : MCController(robot_module, dt) {
 
     solver().addConstraintSet(contactConstraint);
-    solver().addConstraintSet(kinematicsConstraint);
+    solver().addConstraintSet(dynamicsConstraint);
+
+    postureTask->stiffness(30.0);
+    postureTask->weight(50.0);
+    
     solver().addTask(postureTask.get());
 
-    /*
-    comTask = std::make_shared<mc_tasks::CoMTask>(robots(), robots().robotIndex(), 5.0, 10.0);
-    robot().mbc().q = postureTask->posture();
-    auto comT = rbd::computeCoM(robot().mb(), robot().mbc());
-    std::cout << comT << std::endl;
-    comTask->com(comT);
+    comTask = std::make_shared<mc_tasks::CoMTask>(robots(), robots().robotIndex(), 50.0, 10.0);
     solver().addTask(comTask);
+
+    orBodyTask = std::make_shared<mc_tasks::OrientationTask>("Body", robots(), 0, 50.0, 10.0);
+    orBodyTask->orientation(Eigen::Matrix3d::Identity());
+    solver().addTask(orBodyTask);
 
     solver().setContacts({{robots(), 0, 1, "LeftFoot",  "AllGround"},
                           {robots(), 0, 1, "RightFoot", "AllGround"}});
-    */
 
-    solver().setContacts({});
-
-    head_joint_index = robot().jointIndexByName("HY");
+    //solver().setContacts({});
 
     LOG_SUCCESS("MCHMC2TestController init done" << this);
   }
@@ -32,31 +32,15 @@ namespace mc_control {
   bool MCHMC2TestController::run() {
 
     bool ret = MCController::run();
-
-    if (std::abs(postureTask->posture()[head_joint_index][0] - robot().mbc().q[head_joint_index][0]) < 0.05)
-      switch_target();
-    
     return ret;
   }
   
   void MCHMC2TestController::reset(const ControllerResetData & reset_data) {
+
+    auto comT = rbd::computeCoM(robot().mb(), robot().mbc());
+    std::cout << "CoM (first): " << comT.transpose() << std::endl;
+    comTask->com(Eigen::Vector3d(0.0, 0.0, comT[2]));
+    
     MCController::reset(reset_data);
-    target_left = true;
-    switch_target();
-  }
-
-  void MCHMC2TestController::switch_target() {
-
-    double target;
-
-    if (target_left)
-      target = robot().qu()[head_joint_index][0];
-    else
-      target = robot().ql()[head_joint_index][0];
-
-    std::vector<std::vector<double>> cur_obj = postureTask->posture();
-    cur_obj[head_joint_index][0] = target;
-    postureTask->posture(cur_obj);
-    target_left = !target_left;
   }
 }
