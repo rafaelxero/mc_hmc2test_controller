@@ -39,7 +39,8 @@ namespace mc_control {
 
     auto comT = rbd::computeCoM(robot().mb(), robot().mbc());
     std::cout << "CoM (first): " << comT.transpose() << std::endl;
-    comTask->com(Eigen::Vector3d(0.0, 0.0, comT[2]));
+    comTask->com(comT);
+    //comTask->com(Eigen::Vector3d(0.0, 0.0, comT[2]));
     
     MCController::reset(reset_data);
   }
