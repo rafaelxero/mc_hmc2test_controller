@@ -5,7 +5,7 @@ namespace mc_control {
 
   MCHMC2TestController::MCHMC2TestController(std::shared_ptr<mc_rbdyn::RobotModule> robot_module, double dt)
     : MCController(robot_module, dt) {
-
+    
     solver().addConstraintSet(contactConstraint);
     solver().addConstraintSet(dynamicsConstraint);
 
@@ -25,7 +25,7 @@ namespace mc_control {
                           {robots(), 0, 1, "RightFoot", "AllGround"}});
 
     //solver().setContacts({});
-
+    
     LOG_SUCCESS("MCHMC2TestController init done" << this);
   }
 
